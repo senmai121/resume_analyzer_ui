@@ -1,6 +1,8 @@
 import { SignJWT } from 'jose'
 import { NextRequest, NextResponse } from 'next/server'
 
+export const maxDuration = 60
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5077'
 const JWT_SECRET = process.env.JWT_SECRET ?? ''
 const JWT_ISSUER = process.env.JWT_ISSUER ?? 'ResumePDFAnalyzer'
