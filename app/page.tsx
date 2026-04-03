@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import UploadStep from "@/components/UploadStep";
 import ChatStep, { Message } from "@/components/ChatStep";
 import ReportStep from "@/components/ReportStep";
@@ -43,6 +43,15 @@ export default function Home() {
     requiredSkills: string;
     qualifications: string;
   } | null>(null);
+
+  // Warm up Render backend on mount
+  useEffect(() => {
+    fetch("/api/proxy/resume/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId: "warmup", message: "warmup" }),
+    }).catch(() => {});
+  }, []);
 
   async function handleUploadSubmit(
     file: File,

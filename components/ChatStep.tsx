@@ -163,7 +163,7 @@ export default function ChatStep({
                   if (input.trim() && !loading) handleSend(e as never);
                 }
               }}
-              placeholder="Answer questions or provide additional information..."
+              placeholder="Reply or provide additional information about the candidate..."
               disabled={loading}
               maxLength={MAX_LENGTHS.chatMessage}
               rows={2}
