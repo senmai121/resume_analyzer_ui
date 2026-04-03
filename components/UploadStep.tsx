@@ -169,7 +169,7 @@ export default function UploadStep({ onSubmit, loading, initialValues }: Props) 
           value={qualifications}
           onChange={(e) => setQualifications(e.target.value)}
           placeholder="e.g. Bachelor's degree in IT, 3+ years of experience"
-          rows={2}
+          rows={4}
           className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           maxLength={MAX_LENGTHS.qualifications}
         />
