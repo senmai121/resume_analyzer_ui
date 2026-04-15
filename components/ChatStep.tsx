@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Spinner from "./Spinner";
 import { CandidateInfo } from "@/lib/api";
 import { validateField, MAX_LENGTHS } from "@/lib/inputValidation";
 
@@ -14,9 +13,7 @@ interface Props {
   messages: Message[];
   loading: boolean;
   onSend: (message: string) => void;
-  onGetReport: () => void;
   isAnalysisComplete: boolean;
-  reportLoading: boolean;
   candidateInfo?: CandidateInfo | null;
 }
 
@@ -24,9 +21,7 @@ export default function ChatStep({
   messages,
   loading,
   onSend,
-  onGetReport,
   isAnalysisComplete,
-  reportLoading,
   candidateInfo,
 }: Props) {
   const [input, setInput] = useState("");
@@ -124,29 +119,13 @@ export default function ChatStep({
         <div ref={bottomRef} />
       </div>
 
-      {/* Analysis complete banner + report button */}
+      {/* Analysis complete indicator */}
       {isAnalysisComplete && (
-        <div className="mb-3 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-green-700 text-sm font-medium">
-            <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Analysis complete
-          </div>
-          <button
-            onClick={onGetReport}
-            disabled={reportLoading}
-            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2 shrink-0"
-          >
-            {reportLoading ? (
-              <>
-                <Spinner className="h-4 w-4" />
-                Generating report...
-              </>
-            ) : (
-              "View summary report →"
-            )}
-          </button>
+        <div className="mb-3 flex items-center gap-1.5 text-green-700 text-xs font-medium">
+          <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Analysis complete
         </div>
       )}
 

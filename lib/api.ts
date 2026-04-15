@@ -99,3 +99,28 @@ export async function extractCandidateInfo(resumeText: string): Promise<Candidat
   if (!res.ok) await throwApiError(res)
   return res.json()
 }
+
+export interface CandidateRanking {
+  sessionId: string;
+  rank: number;
+  name: string;
+  score: number;
+  suitability: string;
+  strengths: string[];
+  weaknesses: string[];
+}
+
+export interface CompareResponse {
+  ranking: CandidateRanking[];
+  recommendation: string;
+}
+
+export async function compareResumes(sessionIds: string[]): Promise<CompareResponse> {
+  const res = await fetch(`${PROXY}/resume/compare`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionIds }),
+  })
+  if (!res.ok) await throwApiError(res)
+  return res.json()
+}

@@ -4,16 +4,18 @@ import { useRef, useState } from "react";
 import Spinner from "./Spinner";
 import { validateField, MAX_LENGTHS } from "@/lib/inputValidation";
 
+const MAX_FILES = 3;
+
 interface Props {
   onSubmit: (
-    file: File,
+    files: File[],
     position: string,
     requiredSkills: string,
     qualifications: string
   ) => void;
   loading: boolean;
   initialValues?: {
-    file: File;
+    files: File[];
     position: string;
     requiredSkills: string;
     qualifications: string;
@@ -21,7 +23,7 @@ interface Props {
 }
 
 export default function UploadStep({ onSubmit, loading, initialValues }: Props) {
-  const [file, setFile] = useState<File | null>(initialValues?.file ?? null);
+  const [files, setFiles] = useState<File[]>(initialValues?.files ?? []);
   const [position, setPosition] = useState(initialValues?.position ?? "");
   const [requiredSkills, setRequiredSkills] = useState(initialValues?.requiredSkills ?? "");
   const [qualifications, setQualifications] = useState(initialValues?.qualifications ?? "");
@@ -29,17 +31,31 @@ export default function UploadStep({ onSubmit, loading, initialValues }: Props) 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const inputRef = useRef<HTMLInputElement>(null);
 
-  function handleFile(f: File) {
-    if (f.type === "application/pdf" || f.name.endsWith(".pdf")) {
-      setFile(f);
-    }
+  function addFiles(incoming: FileList | File[]) {
+    const pdfs = Array.from(incoming).filter(
+      (f) => f.type === "application/pdf" || f.name.endsWith(".pdf")
+    );
+    setFiles((prev) => {
+      const combined = [...prev];
+      for (const f of pdfs) {
+        if (combined.length >= MAX_FILES) break;
+        // Avoid duplicates by name
+        if (!combined.some((existing) => existing.name === f.name)) {
+          combined.push(f);
+        }
+      }
+      return combined;
+    });
+  }
+
+  function removeFile(index: number) {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   }
 
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     setDragOver(false);
-    const f = e.dataTransfer.files[0];
-    if (f) handleFile(f);
+    addFiles(e.dataTransfer.files);
   }
 
   const validateAllFields = (): boolean => {
@@ -60,69 +76,98 @@ export default function UploadStep({ onSubmit, loading, initialValues }: Props) 
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!file || !position.trim()) return;
+    if (files.length === 0 || !position.trim()) return;
     if (!validateAllFields()) return;
-    onSubmit(file, position.trim(), requiredSkills.trim(), qualifications.trim());
+    onSubmit(files, position.trim(), requiredSkills.trim(), qualifications.trim());
   }
 
-  const canSubmit = !!file && !!position.trim() && !loading;
+  const canSubmit = files.length > 0 && !!position.trim() && !loading;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* PDF Upload */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Resume (PDF)
+          Resumes (PDF) — up to {MAX_FILES} files
         </label>
+
+        {/* Drop zone */}
         <div
-          onClick={() => inputRef.current?.click()}
+          onClick={() => files.length < MAX_FILES && inputRef.current?.click()}
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
-          className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors
-            ${dragOver ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"}
-            ${file ? "bg-green-50 border-green-400" : ""}`}
+          className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors
+            ${files.length >= MAX_FILES
+              ? "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
+              : dragOver
+              ? "border-blue-500 bg-blue-50 cursor-pointer"
+              : "border-gray-300 hover:border-gray-400 cursor-pointer"
+            }`}
         >
           <input
             ref={inputRef}
             type="file"
             accept=".pdf,application/pdf"
+            multiple
             className="hidden"
-            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+            onChange={(e) => { if (e.target.files) addFiles(e.target.files); e.target.value = ""; }}
           />
-          {file ? (
-            <div className="flex flex-col items-center gap-2">
-              <svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <a
-                href={URL.createObjectURL(file)}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="font-medium text-blue-600 hover:underline"
-              >
-                {file.name}
-              </a>
-              <span className="text-sm text-gray-500">{(file.size / 1024).toFixed(1)} KB</span>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setFile(null); }}
-                className="text-xs text-red-500 hover:underline"
-              >
-                Change file
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-2 text-gray-400">
-              <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
-              <span className="font-medium">Drop PDF here, or click to select a file</span>
-              <span className="text-xs">Supports .pdf files up to 20MB</span>
-            </div>
-          )}
+          <div className="flex flex-col items-center gap-2 text-gray-400">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            {files.length >= MAX_FILES ? (
+              <span className="font-medium text-sm">Maximum {MAX_FILES} files reached</span>
+            ) : (
+              <>
+                <span className="font-medium text-sm">Drop PDFs here, or click to add files</span>
+                <span className="text-xs">Supports .pdf files up to 20MB each</span>
+              </>
+            )}
+          </div>
         </div>
+
+        {/* File counter */}
+        <p className="text-xs text-gray-500 mt-1.5 text-right">
+          {files.length} / {MAX_FILES} resumes
+        </p>
+
+        {/* File list */}
+        {files.length > 0 && (
+          <ul className="mt-2 space-y-2">
+            {files.map((f, i) => (
+              <li
+                key={i}
+                className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-lg px-3 py-2"
+              >
+                <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <a
+                  href={URL.createObjectURL(f)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex-1 text-sm font-medium text-blue-600 hover:underline truncate"
+                >
+                  {f.name}
+                </a>
+                <span className="text-xs text-gray-500 shrink-0">{(f.size / 1024).toFixed(1)} KB</span>
+                <button
+                  type="button"
+                  onClick={() => removeFile(i)}
+                  className="text-red-400 hover:text-red-600 shrink-0 transition-colors"
+                  aria-label="Remove file"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {/* Job Details */}
@@ -189,7 +234,7 @@ export default function UploadStep({ onSubmit, loading, initialValues }: Props) 
             Analyzing...
           </>
         ) : (
-          "Analyze Resume"
+          `Analyze ${files.length > 1 ? `${files.length} Resumes` : "Resume"}`
         )}
       </button>
     </form>
