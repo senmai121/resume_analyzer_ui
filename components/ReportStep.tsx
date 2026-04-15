@@ -28,26 +28,20 @@ function ScoreRing({ score }: { score: number }) {
   const color = scoreHexColor(score);
 
   return (
-    <div className="flex flex-col items-center gap-1">
-      <svg width="100" height="100" className="-rotate-90">
-        <circle
-          cx="50" cy="50" r={radius}
-          fill="none" stroke="#e5e7eb" strokeWidth="10"
-        />
-        <circle
-          cx="50" cy="50" r={radius}
-          fill="none" stroke={color} strokeWidth="10"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          style={{ transition: "stroke-dashoffset 0.8s ease" }}
-        />
-      </svg>
-      <div className="absolute flex flex-col items-center -mt-[68px]">
-        <span className="text-2xl font-bold" style={{ color }}>{score}</span>
-        <span className="text-xs text-gray-500">/ 100</span>
-      </div>
-    </div>
+    <svg width="100" height="100" className="-rotate-90">
+      <circle
+        cx="50" cy="50" r={radius}
+        fill="none" stroke="#e5e7eb" strokeWidth="10"
+      />
+      <circle
+        cx="50" cy="50" r={radius}
+        fill="none" stroke={color} strokeWidth="10"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        style={{ transition: "stroke-dashoffset 0.8s ease" }}
+      />
+    </svg>
   );
 }
 
