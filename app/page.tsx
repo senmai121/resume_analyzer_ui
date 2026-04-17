@@ -218,7 +218,21 @@ export default function Home() {
     try {
       const sessionIds = candidates.map((c) => c.sessionId);
       const result = await compareResumes(sessionIds);
-      setCompareReport(result);
+
+      // Override scores with locally stored report scores so compare is consistent with individual reports
+      const scoreBySession = Object.fromEntries(
+        candidates.filter((c) => c.report).map((c) => [c.sessionId, c.report!.score])
+      );
+      const fixedResult = {
+        ...result,
+        ranking: result.ranking.map((r) =>
+          scoreBySession[r.sessionId] !== undefined
+            ? { ...r, score: scoreBySession[r.sessionId] }
+            : r
+        ),
+      };
+
+      setCompareReport(fixedResult);
       setActiveReportTab("compare");
     } catch (e) {
       setError(e instanceof Error ? e.message : "An error occurred");
